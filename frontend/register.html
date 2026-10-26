@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Akun - CyberReport</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animated-bg {
+            background: linear-gradient(-45deg, #050505, #0a192f, #1a0b2e, #050505);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        .neon-border {
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.15), inset 0 0 20px rgba(34, 211, 238, 0.05);
+        }
+    </style>
+</head>
+<body class="animated-bg text-white min-h-screen flex items-center justify-center font-sans overflow-y-auto py-10">
+
+    <a href="index.html" class="fixed top-6 left-6 flex items-center gap-2 text-cyan-300 hover:text-white bg-black/40 hover:bg-black/60 px-4 py-2 rounded-xl transition-all duration-300 backdrop-blur-md border border-cyan-500/30 z-50">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        <span class="text-sm font-bold">Beranda</span>
+    </a>
+
+    <div class="bg-black/50 backdrop-blur-xl border border-cyan-500/30 p-8 rounded-2xl shadow-2xl w-full max-w-md text-white relative z-10 neon-border">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">CYBERREPORT</h1>
+            <p class="text-cyan-200/70 mt-2 text-sm font-medium">Registrasi Akun Baru</p>
+        </div>
+
+        <form id="registerForm" class="space-y-4">
+            <div>
+                <label class="block text-cyan-100 text-sm font-bold mb-2">Nama Lengkap</label>
+                <input type="text" id="nama" class="w-full px-4 py-3 bg-white/5 border border-cyan-500/30 rounded-lg text-white placeholder-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition" placeholder="Contoh: Budi Santoso" required>
+            </div>
+
+            <div>
+                <label class="block text-cyan-100 text-sm font-bold mb-2">Email</label>
+                <input type="email" id="email" class="w-full px-4 py-3 bg-white/5 border border-cyan-500/30 rounded-lg text-white placeholder-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition" placeholder="nama@email.com" required>
+            </div>
+
+            <div>
+                <label class="block text-cyan-100 text-sm font-bold mb-2">Password</label>
+                <input type="password" id="password" class="w-full px-4 py-3 bg-white/5 border border-cyan-500/30 rounded-lg text-white placeholder-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition" placeholder="Buat password (min. 8 karakter)" required>
+            </div>
+
+            <div class="pt-2">
+                <div class="flex items-center gap-2 mb-2">
+                    <label class="block text-cyan-100 text-sm font-bold">Kode Akses Admin</label>
+                    <span class="bg-cyan-500/20 text-cyan-300 text-[10px] font-bold px-2 py-0.5 rounded border border-cyan-500/30 uppercase tracking-wider">Opsional</span>
+                </div>
+                <input type="text" id="kode_admin" class="w-full px-4 py-3 bg-white/5 border border-cyan-500/30 rounded-lg text-white placeholder-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition" placeholder="Masukkan kode rahasia">
+                <p class="text-xs text-cyan-200/50 mt-1.5 leading-relaxed">
+                    *Hanya untuk pihak berwenang. Biarkan kosong jika Anda mendaftar sebagai masyarakat umum.
+                </p>
+            </div>
+            
+            <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3.5 rounded-lg transition duration-300 shadow-[0_0_15px_rgba(8,145,178,0.6)] mt-4">
+                Daftar Sekarang
+            </button>
+        </form>
+
+        <p class="text-center text-cyan-200/60 mt-6 text-sm">
+            Sudah punya akun? <a href="login.html" class="text-cyan-400 font-bold hover:text-white transition">Masuk di sini</a>
+        </p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const registerForm = document.getElementById('registerForm');
+            
+            if (registerForm) {
+                registerForm.addEventListener('submit', async (e) => {
+                    e.preventDefault(); 
+
+                    const nama = document.getElementById('nama').value;
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    const kode_admin = document.getElementById('kode_admin').value;
+
+                    try {
+                        const response = await fetch('http://127.0.0.1:5000/api/auth/register', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ nama, email, password, kode_admin })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            alert("🎉 " + data.message);
+                            window.location.href = 'login.html'; 
+                        } else {
+                            alert("❌ " + data.message); 
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('⚠️ Gagal terhubung ke server. Pastikan backend menyala.');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

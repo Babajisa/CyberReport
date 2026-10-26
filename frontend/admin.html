@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - CyberReport</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Library Chart.js & Leaflet (Peta) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Paksa Dark Mode Aktif -->
+    <script>
+        document.documentElement.classList.add('dark');
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <style>
+        /* Animasi Background Neon */
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animated-bg {
+            background: linear-gradient(-45deg, #050505, #0a192f, #1a0b2e, #050505);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        /* Efek Glow Neon */
+        .neon-border {
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.1), inset 0 0 15px rgba(34, 211, 238, 0.05);
+        }
+        /* Warna teks di dalam peta */
+        .leaflet-popup-content { color: #333 !important; }
+        
+        /* TRIK CSS: Membuat Peta OpenStreetMap Menjadi Gelap */
+        .leaflet-layer {
+            filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+        }
+    </style>
+</head>
+<body class="animated-bg text-gray-200 min-h-screen font-sans">
+
+    <!-- Navbar Admin (Garis Neon) -->
+    <nav class="bg-black/60 backdrop-blur-lg border-b border-cyan-500/30 sticky top-0 z-[1000] transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                <span class="text-xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">CYBERREPORT</span>
+                <span class="text-xs font-bold bg-purple-900/50 border border-purple-500/50 px-3 py-1 rounded-full text-purple-300">ADMIN PANEL</span>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <a href="dashboard.html" class="text-sm font-bold bg-gray-800/80 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition border border-gray-600 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Dashboard
+                </a>
+
+                <button onclick="logout()" class="bg-red-900/40 border border-red-500/50 text-red-400 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-900/60 transition shadow-[0_0_10px_rgba(220,38,38,0.3)]">
+                    Keluar
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Konten Utama -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- Grafik Statistik -->
+        <div class="bg-black/40 backdrop-blur-md border border-cyan-500/20 rounded-2xl shadow-lg p-6 mb-8 neon-border">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-white text-lg">Statistik Laporan Berdasarkan Kategori</h3>
+                <button onclick="loadLaporan()" class="text-sm bg-cyan-900/40 border border-cyan-500/50 text-cyan-300 px-4 py-2 rounded-lg hover:bg-cyan-800/60 transition font-bold flex items-center gap-2 shadow-[0_0_10px_rgba(34,211,238,0.2)]">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Refresh Data
+                </button>
+            </div>
+            <div class="w-full h-72">
+                <canvas id="grafikKategori"></canvas>
+            </div>
+        </div>
+
+        <!-- PETA HEATMAP -->
+        <div class="bg-black/40 backdrop-blur-md border border-cyan-500/20 rounded-2xl shadow-lg p-6 mb-8 neon-border">
+            <h3 class="font-bold text-white text-lg mb-4">Peta Sebaran Insiden Siber</h3>
+            <div id="petaIndonesia" class="w-full h-96 rounded-xl z-0 border border-cyan-500/30"></div>
+        </div>
+
+        <!-- Tabel Data -->
+        <div class="bg-black/40 backdrop-blur-md border border-cyan-500/20 rounded-2xl shadow-lg overflow-hidden neon-border">
+            <div class="p-6 border-b border-cyan-500/20 bg-black/20">
+                <h2 class="text-lg font-bold text-white">Daftar Laporan Masyarakat</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-black/30 border-b border-cyan-500/20 text-xs uppercase tracking-wider text-cyan-300 font-bold">
+                            <th class="p-4">Tiket ID</th>
+                            <th class="p-4">Pelapor</th>
+                            <th class="p-4">Kategori</th>
+                            <th class="p-4">Lokasi</th>
+                            <th class="p-4">Target</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelLaporan" class="text-sm text-gray-300">
+                        <tr><td colspan="7" class="p-8 text-center text-cyan-500/50">Memuat data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- SCRIPT LOGIKA -->
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = 'login.html';
+
+        let petaMap = null;
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+
+        // --- LOGIKA AMBIL DATA ---
+        async function loadLaporan() {
+            const tbody = document.getElementById('tabelLaporan');
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/laporan/admin', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error("Gagal mengambil data");
+                const data = await response.json();
+                
+                // Render Tabel
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-500">Belum ada laporan masuk.</td></tr>`;
+                } else {
+                    tbody.innerHTML = data.map(l => `
+                        <tr class="border-b border-cyan-500/10 hover:bg-cyan-900/20 transition-colors cursor-default">
+                            <td class="p-4 font-bold text-cyan-400">${l.tiket_id}</td>
+                            <td class="p-4 font-medium text-white">${l.nama}</td>
+                            <td class="p-4">${l.kategori}</td>
+                            <td class="p-4">${l.lokasi}</td>
+                            <td class="p-4 font-mono text-xs">${l.target_insiden}</td>
+                            <td class="p-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold border ${l.status === 'Menunggu' ? 'bg-yellow-900/50 text-yellow-400 border-yellow-500/50' : 'bg-green-900/50 text-green-400 border-green-500/50'}">
+                                    ${l.status}
+                                </span>
+                            </td>
+                            <td class="p-4 text-center">
+                                <button onclick="ubahStatus(${l.id}, '${l.status}')" class="bg-gray-800 text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-700 transition border border-gray-600">
+                                    Ubah Status
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+
+                // Render Grafik & Peta
+                renderGrafik(data);
+                renderPeta(data);
+
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-red-400 font-bold">Error: ${error.message}</td></tr>`;
+            }
+        }
+
+        // --- LOGIKA GRAFIK NEON ---
+        function renderGrafik(data) {
+            const kategoriCount = {};
+            data.forEach(l => {
+                kategoriCount[l.kategori] = (kategoriCount[l.kategori] || 0) + 1;
+            });
+
+            const ctx = document.getElementById('grafikKategori').getContext('2d');
+            if (window.myChart) window.myChart.destroy(); 
+
+            window.myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(kategoriCount).length > 0 ? Object.keys(kategoriCount) : ['Belum Ada Data'],
+                    datasets: [{
+                        label: 'Jumlah Laporan',
+                        data: Object.values(kategoriCount).length > 0 ? Object.values(kategoriCount) : [0],
+                        backgroundColor: ['rgba(34, 211, 238, 0.8)', 'rgba(239, 68, 68, 0.8)', 'rgba(16, 185, 129, 0.8)', 'rgba(245, 158, 11, 0.8)', 'rgba(139, 92, 246, 0.8)'],
+                        borderColor: ['#22d3ee', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'],
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barThickness: 50
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { stepSize: 1, color: '#9ca3af' },
+                            grid: { color: 'rgba(34, 211, 238, 0.1)', borderDash: [5, 5] }
+                        },
+                        x: { 
+                            ticks: { color: '#9ca3af' },
+                            grid: { display: false } 
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- LOGIKA PETA LEAFLET (Tema Gelap Tanpa API Key) ---
+        function renderPeta(data) {
+            const koordinatProvinsi = {
+                "DKI Jakarta": [-6.2088, 106.8456],
+                "Jawa Barat": [-6.9147, 107.6098],
+                "Jawa Tengah": [-7.0051, 110.4381],
+                "Jawa Timur": [-7.2575, 112.7521],
+                "Sumatera Utara": [3.5952, 98.6722],
+                "Sulawesi Selatan": [-5.1477, 119.4327],
+                "Bali": [-8.4095, 115.1889]
+            };
+
+            if (!petaMap) {
+                petaMap = L.map('petaIndonesia').setView([-2.548926, 118.0148634], 5);
+                
+                // Gunakan tile OpenStreetMap Standar (Gratis)
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(petaMap);
+            } else {
+                // Hapus marker lama agar tidak dobel saat refresh
+                petaMap.eachLayer((layer) => {
+                    if (layer instanceof L.CircleMarker) {
+                        petaMap.removeLayer(layer);
+                    }
+                });
+            }
+
+            // Tambahkan titik merah
+            data.forEach(l => {
+                const koordinat = koordinatProvinsi[l.lokasi];
+                if (koordinat) {
+                    L.circleMarker(koordinat, {
+                        color: '#ef4444',
+                        fillColor: '#ef4444',
+                        fillOpacity: 0.7,
+                        radius: 15,
+                        weight: 2
+                    }).addTo(petaMap)
+                    .bindPopup(`<b>${l.kategori}</b><br>Target: ${l.target_insiden}<br>Lokasi: ${l.lokasi}<br>Status: ${l.status}`);
+                }
+            });
+        }
+
+        // --- LOGIKA UBAH STATUS ---
+        async function ubahStatus(id, statusSaatIni) {
+            const statusBaru = statusSaatIni === 'Menunggu' ? 'Selesai' : 'Menunggu';
+            try {
+                await fetch(`http://127.0.0.1:5000/api/laporan/${id}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status: statusBaru })
+                });
+                loadLaporan(); 
+            } catch (error) {
+                alert("Gagal mengubah status");
+            }
+        }
+
+        // Jalankan saat halaman dimuat
+        loadLaporan();
+    </script>
+</body>
+</html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CyberReport</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        // Paksa Dark Mode Aktif
+        document.documentElement.classList.add('dark');
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <style>
+        /* Animasi Background Neon */
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animated-bg {
+            background: linear-gradient(-45deg, #050505, #0a192f, #1a0b2e, #050505);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        /* Efek Glow Neon */
+        .neon-border {
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.1), inset 0 0 15px rgba(34, 211, 238, 0.05);
+        }
+        .neon-text {
+            text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+        }
+    </style>
+</head>
+<body class="animated-bg text-gray-200 min-h-screen font-sans">
+
+    <!-- Navbar -->
+    <nav class="bg-black/40 backdrop-blur-lg border-b border-cyan-500/30 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    <span class="text-xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">CYBERREPORT</span>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <!-- Tombol Admin (Hanya untuk Admin) -->
+                    <a href="admin.html" id="btnAdmin" class="hidden bg-purple-600/80 text-white px-4 py-2 rounded-lg font-bold hover:bg-purple-500 transition shadow-[0_0_10px_rgba(147,51,234,0.5)]">Panel Admin</a>
+                    
+                    <span class="text-cyan-300 font-medium hidden sm:block">Halo, <span id="namaUser" class="text-white font-bold"></span>!</span>
+                    
+                    <button id="btnLogout" class="bg-red-900/30 border border-red-500/50 text-red-400 px-4 py-2 rounded-lg font-bold hover:bg-red-900/50 transition">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Konten Utama -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        
+        <!-- Banner Sapaan & Cek Waspada -->
+        <div class="bg-gradient-to-r from-blue-900/50 to-purple-900/50 backdrop-blur-md border border-cyan-500/30 rounded-3xl p-8 md:p-10 shadow-2xl mb-10 neon-border">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-black mb-3 tracking-tight text-white neon-text">Platform Pelaporan Insiden Siber</h1>
+                    <p class="text-cyan-100/70 max-w-xl text-sm md:text-base leading-relaxed">Bantu kami menciptakan ruang digital yang aman. Laporkan penipuan atau cek apakah nomor/link ini sudah pernah dilaporkan.</p>
+                </div>
+                <a href="lapor.html" class="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-3.5 rounded-xl font-bold text-lg transition-all shadow-[0_0_15px_rgba(8,145,178,0.6)] hover:scale-105 flex items-center gap-2 whitespace-nowrap">
+                    + Buat Laporan Baru
+                </a>
+            </div>
+
+            <!-- FITUR CEK WASPADA -->
+            <div class="bg-black/40 p-5 rounded-2xl border border-cyan-500/20">
+                <label class="block text-sm font-bold text-cyan-300 mb-3 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    Cek Nomor HP / Link Penipu
+                </label>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input type="text" id="inputWaspada" class="flex-1 px-4 py-3 rounded-lg text-white bg-white/5 border border-cyan-500/30 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition" placeholder="Contoh: 0812345678 atau www.link-palsu.com">
+                    <button id="btnCekWaspada" class="bg-cyan-900/50 border border-cyan-500 text-cyan-300 px-6 py-3 rounded-lg font-bold hover:bg-cyan-800 transition">
+                        Cek Sekarang
+                    </button>
+                </div>
+                <div id="hasilWaspada" class="hidden mt-4 p-4 rounded-lg font-medium text-sm"></div>
+            </div>
+        </div>
+
+        <!-- Area Riwayat -->
+        <div class="bg-black/40 backdrop-blur-md border border-cyan-500/20 rounded-2xl shadow-lg overflow-hidden neon-border">
+            <div class="p-6 border-b border-cyan-500/20 bg-black/20">
+                <h2 class="text-xl font-bold text-white">Riwayat Laporan Saya</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-black/30 border-b border-cyan-500/20 text-xs uppercase tracking-wider text-cyan-300 font-bold">
+                            <th class="p-4">Tiket ID</th>
+                            <th class="p-4">Kategori</th>
+                            <th class="p-4">Lokasi</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelLaporan" class="text-sm text-gray-300">
+                        <tr><td colspan="5" class="p-8 text-center text-cyan-500/50">Memuat data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- TOMBOL DARURAT (FLOATING) -->
+    <button id="btnDarurat" class="fixed bottom-6 right-6 z-50 bg-red-600 hover:bg-red-500 text-white p-4 rounded-full shadow-[0_0_20px_rgba(220,38,38,0.6)] transition-all duration-300 animate-bounce flex items-center justify-center border border-red-400" title="Bantuan Darurat">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+    </button>
+
+    <!-- MODAL POP-UP DARURAT -->
+    <div id="modalDarurat" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-gray-900 border border-cyan-500/30 rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all neon-border">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-red-500 flex items-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    Kontak Darurat Siber
+                </h3>
+                <button id="tutupModal" class="text-gray-400 hover:text-white font-bold text-2xl">&times;</button>
+            </div>
+            <p class="text-sm text-gray-400 mb-5">Jika Anda mengalami kerugian finansial atau kebocoran data mendesak, segera hubungi pihak berwenang:</p>
+            
+            <div class="space-y-3">
+                <a href="tel:110" class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition border border-gray-700">
+                    <div class="w-10 h-10 bg-blue-900/50 text-blue-400 rounded-full flex items-center justify-center font-bold border border-blue-700">110</div>
+                    <div>
+                        <p class="font-bold text-white text-sm">Call Center Polri</p>
+                        <p class="text-xs text-gray-400">Laporan tindak pidana siber</p>
+                    </div>
+                </a>
+                <a href="tel:159" class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition border border-gray-700">
+                    <div class="w-10 h-10 bg-green-900/50 text-green-400 rounded-full flex items-center justify-center font-bold border border-green-700">159</div>
+                    <div>
+                        <p class="font-bold text-white text-sm">Kominfo</p>
+                        <p class="text-xs text-gray-400">Blokir konten/nomor penipuan</p>
+                    </div>
+                </a>
+                <a href="tel:14000" class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition border border-gray-700">
+                    <div class="w-10 h-10 bg-yellow-900/50 text-yellow-400 rounded-full flex items-center justify-center font-bold border border-yellow-700">14000</div>
+                    <div>
+                        <p class="font-bold text-white text-sm">Bank Indonesia</p>
+                        <p class="text-xs text-gray-400">Pemblokiran rekening penipu</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIKA -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                document.getElementById('namaUser').innerText = user.nama;
+                if (user.role === 'admin') {
+                    document.getElementById('btnAdmin').classList.remove('hidden');
+                }
+            }
+
+            // Logout
+            document.getElementById('btnLogout').addEventListener('click', () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            });
+
+            // Logika Tombol Darurat
+            const btnDarurat = document.getElementById('btnDarurat');
+            const modalDarurat = document.getElementById('modalDarurat');
+            const tutupModal = document.getElementById('tutupModal');
+
+            btnDarurat.addEventListener('click', () => {
+                modalDarurat.classList.remove('hidden');
+                modalDarurat.classList.add('flex');
+            });
+
+            tutupModal.addEventListener('click', () => {
+                modalDarurat.classList.add('hidden');
+                modalDarurat.classList.remove('flex');
+            });
+
+            modalDarurat.addEventListener('click', (e) => {
+                if (e.target === modalDarurat) {
+                    modalDarurat.classList.add('hidden');
+                    modalDarurat.classList.remove('flex');
+                }
+            });
+
+            // Logika Cek Waspada
+            const btnCekWaspada = document.getElementById('btnCekWaspada');
+            if (btnCekWaspada) {
+                btnCekWaspada.addEventListener('click', async () => {
+                    const keyword = document.getElementById('inputWaspada').value;
+                    const hasilDiv = document.getElementById('hasilWaspada');
+                    
+                    if (!keyword) {
+                        alert("Silakan masukkan nomor HP atau link terlebih dahulu!");
+                        return;
+                    }
+
+                    hasilDiv.classList.remove('hidden');
+                    hasilDiv.innerHTML = `<span class="animate-pulse text-cyan-400">Mencari data di database...</span>`;
+
+                    try {
+                        const response = await fetch(`http://127.0.0.1:5000/api/laporan/cek?keyword=${keyword}`);
+                        const data = await response.json();
+
+                        if (data.total_laporan > 0) {
+                            hasilDiv.className = "mt-4 p-4 rounded-lg font-medium text-sm bg-red-900/40 text-red-300 border border-red-500/50";
+                            hasilDiv.innerHTML = `
+                                <p class="font-bold text-base mb-1">⚠️ AWAS! Data Ditemukan!</p>
+                                <p>Nomor/Link ini telah dilaporkan sebanyak <b>${data.total_laporan} kali</b> oleh masyarakat.</p>
+                                <p class="mt-1 text-xs">Kategori terbanyak: ${data.detail[0].kategori}</p>
+                            `;
+                        } else {
+                            hasilDiv.className = "mt-4 p-4 rounded-lg font-medium text-sm bg-green-900/40 text-green-300 border border-green-500/50";
+                            hasilDiv.innerHTML = `
+                                <p class="font-bold text-base mb-1">✅ Aman Terkontrol</p>
+                                <p>Belum ada laporan untuk nomor/link ini di database kami. Tetap waspada!</p>
+                            `;
+                        }
+                    } catch (error) {
+                        hasilDiv.className = "mt-4 p-4 rounded-lg font-medium text-sm bg-gray-800 text-gray-300 border border-gray-600";
+                        hasilDiv.innerHTML = `Gagal terhubung ke server.`;
+                    }
+                });
+            }
+
+            // Ambil Data Laporan
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/laporan/user', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error("Gagal ambil data");
+
+                const data = await response.json();
+                const tbody = document.getElementById('tabelLaporan');
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">Belum ada laporan. Silakan buat laporan baru.</td></tr>`;
+                } else {
+                    tbody.innerHTML = data.map(l => `
+                        <tr class="border-b border-cyan-500/10 hover:bg-cyan-900/20 transition-colors cursor-default">
+                            <td class="p-4 font-bold text-cyan-400">${l.tiket_id}</td>
+                            <td class="p-4 font-medium">${l.kategori}</td>
+                            <td class="p-4">${l.lokasi}</td>
+                            <td class="p-4">
+                                <span class="${l.status === 'Selesai' ? 'bg-green-900/50 text-green-400 border-green-500/50' : 'bg-yellow-900/50 text-yellow-400 border-yellow-500/50'} px-3 py-1 rounded-full text-xs font-bold border">
+                                    ${l.status}
+                                </span>
+                            </td>
+                            <td class="p-4 text-center">
+                                ${l.status === 'Selesai' ? 
+                                    `<button onclick="cetakPDF('${l.tiket_id}', '${l.kategori}', '${l.target_insiden}', '${l.lokasi}', '${l.deskripsi || '-'}')" class="bg-cyan-900/50 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-800 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 mx-auto shadow-[0_0_10px_rgba(34,211,238,0.2)]">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                        PDF
+                                    </button>` 
+                                : `<span class="text-gray-500 text-xs italic">Menunggu</span>`}
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('tabelLaporan').innerHTML = `<tr><td colspan="5" class="p-8 text-center text-red-400 font-medium">Gagal memuat data. Pastikan backend menyala.</td></tr>`;
+            }
+        });
+
+        // --- FUNGSI CETAK PDF ---
+        function cetakPDF(tiket, kategori, target, lokasi, deskripsi) {
+            const tanggal = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            const element = document.createElement('div');
+            element.innerHTML = `
+                <div style="font-family: Arial, sans-serif; padding: 40px; color: #333;">
+                    <div style="text-align: center; border-bottom: 3px double #333; padding-bottom: 20px; margin-bottom: 30px;">
+                        <h1 style="margin: 0; font-size: 24px; letter-spacing: 2px;">CYBERREPORT</h1>
+                        <p style="margin: 5px 0 0; font-size: 14px; color: #666;">Platform Pelaporan Insiden Siber Masyarakat</p>
+                    </div>
+                    <h2 style="text-align: center; font-size: 18px; text-decoration: underline; margin-bottom: 30px;">BUKTI PELAPORAN INSIDEN SIBER</h2>
+                    <p style="margin-bottom: 20px;">Dengan ini menerangkan bahwa laporan dengan detail berikut telah diterima dan diverifikasi oleh sistem CyberReport:</p>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px;">
+                        <tr><td style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: bold; width: 30%;">ID Tiket Laporan</td><td style="padding: 10px; border-bottom: 1px solid #ddd;">${tiket}</td></tr>
+                        <tr><td style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: bold;">Tanggal Cetak</td><td style="padding: 10px; border-bottom: 1px solid #ddd;">${tanggal}</td></tr>
+                        <tr><td style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: bold;">Kategori Insiden</td><td style="padding: 10px; border-bottom: 1px solid #ddd;">${kategori}</td></tr>
+                        <tr><td style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: bold;">Lokasi Kejadian</td><td style="padding: 10px; border-bottom: 1px solid #ddd;">${lokasi}</td></tr>
+                        <tr><td style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: bold;">Nomor HP / Link Pelaku</td><td style="padding: 10px; border-bottom: 1px solid #ddd;">${target}</td></tr>
+                        <tr><td style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: bold;">Kronologi Singkat</td><td style="padding: 10px; border-bottom: 1px solid #ddd;">${deskripsi}</td></tr>
+                        <tr><td style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: bold;">Status Laporan</td><td style="padding: 10px; border-bottom: 1px solid #ddd; color: #166534; font-weight: bold;">SELESAI DIVERIFIKASI</td></tr>
+                    </table>
+                    <p style="font-size: 12px; color: #666; text-align: justify; margin-bottom: 40px;">Dokumen ini merupakan bukti sah dari sistem CyberReport. Anda dapat menggunakan dokumen ini sebagai lampiran pendukung saat melaporkan insiden ke pihak berwenang (Polisi) atau pihak bank terkait.</p>
+                    <div style="text-align: right; margin-top: 50px;"><p style="margin: 0;">Hormat Kami,</p><p style="margin: 60px 0 0; font-weight: bold; text-decoration: underline;">Sistem CyberReport</p></div>
+                </div>
+            `;
+
+            const opt = {
+                margin: 0, filename: `Bukti_Laporan_${tiket}.pdf`, image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>
